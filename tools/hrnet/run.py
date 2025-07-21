@@ -120,7 +120,7 @@ def parse_args():
     parser.add_argument('--cfg', type=str, default='tools/hrnet/inference_demo_coco.yaml')
     parser.add_argument('--visthre', type=float, default=0.1)
     
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     
     return args
 

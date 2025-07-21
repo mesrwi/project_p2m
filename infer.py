@@ -78,9 +78,11 @@ def visualization(pose3d):
     # 애니메이션 생성
     ani = FuncAnimation(fig, update, frames=pose3d.shape[0])
     ani.save('pose3d.mp4',fps=10)
+    plt.cla()
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--filepath", type=str, required=True, help="Path to input video file")
     parser.add_argument("--model", default='CLIPLoRATemporal')
     parser.add_argument("--temporal_range", default=9)
     parser.add_argument("--d_model", default=128)
@@ -90,12 +92,10 @@ def parse_args():
     
     return args
 
-def main(filepath):
-    args = parse_args()
-    input_dict = input_feeder(filepath, target_size=512, target_fps=10)
+def main(args):
+    input_dict = input_feeder(args.filepath, target_size=512, target_fps=10)
     
     predict_shoulder_degree(input_dict['pose2d'])
-    visualization(input_dict['pose3d'])
     
     model = CLIPLoRATemporalModel.load_from_checkpoint('tools/pose2muscle/P2M_CLIP_LoRA_temporal-epoch=189-val_smape=0.66.ckpt', args=args)
     model = model.eval()
@@ -104,11 +104,17 @@ def main(filepath):
     x_text = ['Inference']
     
     preds, image_embeds, text_embeds = model(x_CLIP, x_text)
-    plt.plot(preds.squeeze().detach().cpu().numpy()[:, 2])
+    plt.plot(preds.squeeze(0).detach().cpu().numpy()[:, 2])
+    plt.xlabel("Time Step")
+    plt.ylabel(f"Prediction (Channel 2)")
+    plt.title("Predicted Signal")
     plt.savefig('res.png')
+
+    visualization(input_dict['pose3d'])
     
     return preds
 
 if __name__=='__main__':
-    filepath = "original_clip_1.mp4" # '/data2/Pose2Muscle/test/231121_A/ground_heavy/00014/clip.mp4'
-    preds = main(filepath)
+    args = parse_args()
+    # filepath = "clip.mp4" # '/data2/Pose2Muscle/test/231121_A/ground_heavy/00014/clip.mp4'
+    preds = main(args)

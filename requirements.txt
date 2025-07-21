@@ -9,3 +9,4 @@ json_tricks
 pycocotools
 scipy
 easydict
+hf_xet

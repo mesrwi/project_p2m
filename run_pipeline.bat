@@ -15,6 +15,6 @@ set /p VIDEO=Enter path to video file (.mp4):
 @REM set VIDEO=..\examples\original_clip_1.mp4
 
 REM 인퍼런스 수행
-python "%INFER_PATH%"
+python "%INFER_PATH%" --filepath "%VIDEO%"
 
 pause

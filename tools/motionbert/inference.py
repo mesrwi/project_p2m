@@ -8,6 +8,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
 
+from collections import OrderedDict
 from tools.motionbert.utils.tools import *
 from tools.motionbert.utils.learning import load_backbone
 from tools.motionbert.utils.data import flip_data, crop_scale
@@ -90,8 +91,8 @@ def parse_args():
     parser.add_argument('--pixel', action='store_true', help='align with pixel coordinates')
     parser.add_argument('--focus', type=int, default=None, help='target person id')
     parser.add_argument('--clip_len', type=int, default=243, help='clip length for network input')
-    opts = parser.parse_args()
-    
+
+    opts, _ = parser.parse_known_args()
     return opts
 
 def main(pose2d, vid_size):
@@ -99,15 +100,21 @@ def main(pose2d, vid_size):
     # opts.out_path = '/home/tako/mesrwi/project_p2m/pipeline/res'
     args = get_config(opts.config)
     
-
+    print('Loading checkpoint', opts.evaluate)
     model_backbone = load_backbone(args)
     if torch.cuda.is_available():
         model_backbone = nn.DataParallel(model_backbone)
         model_backbone = model_backbone.cuda()
+        checkpoint = torch.load(opts.evaluate, map_location=lambda storage, loc: storage, weights_only=True)
+        model_backbone.load_state_dict(checkpoint['model_pos'], strict=True)
+    else:
+        checkpoint = torch.load(opts.evaluate, map_location=torch.device('cpu'), weights_only=True)
+        new_state_dict = OrderedDict()
+        for k, v in checkpoint['model_pos'].items():
+            name = k[7:] # remove `module.`
+            new_state_dict[name] = v
+        model_backbone.load_state_dict(new_state_dict, strict=True)
 
-    print('Loading checkpoint', opts.evaluate)
-    checkpoint = torch.load(opts.evaluate, map_location=lambda storage, loc: storage, weights_only=True)
-    model_backbone.load_state_dict(checkpoint['model_pos'], strict=True)
     model_pos = model_backbone
     model_pos.eval()
     test_loader_params = {
