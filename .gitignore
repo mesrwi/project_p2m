@@ -1,0 +1,8 @@
+*.png
+*.ipynb
+.venv
+myenv
+__pycache__
+*.pth
+*.ckpt
+*.bin
