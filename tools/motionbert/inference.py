@@ -83,7 +83,7 @@ class DetDataset(Dataset):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default='tools/motionbert/configs/MB_ft_h36m_global_lite.yaml', help='Path to the config file.')
-    parser.add_argument('-e', '--evaluate', default='tools/motionbert/checkpoint/FT_MB_lite_MB_ft_h36m_global_lite/best_epoch.bin')
+    parser.add_argument('-e', '--evaluate', default='tools/motionbert/checkpoint/best_epoch.bin')
     parser.add_argument('-j', '--json_path', type=str, help='Detected 2D pose json path')
     parser.add_argument('-v', '--vid_path', type=str, help='video path')
     parser.add_argument('-o', '--out_path', type=str, help='output path')
