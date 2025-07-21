@@ -76,7 +76,7 @@ def get_pose_estimation_prediction(cfg, model, image, vis_thre, transforms):
             )
 
             image_resized = transforms(image_resized)
-            image_resized = image_resized.unsqueeze(0).cuda()
+            image_resized = image_resized.unsqueeze(0).to(device)
 
             heatmap, posemap = get_multi_stage_outputs(
                 cfg, model, image_resized, cfg.TEST.FLIP_TEST
@@ -151,7 +151,10 @@ def main(input_vid, duration, vid_size, fps, target_size, target_fps):
     # 사전학습한 HRNet의 가중치 로드
     if cfg.TEST.MODEL_FILE:
         print('=> loading model from {}'.format(cfg.TEST.MODEL_FILE))
-        pose_model.load_state_dict(torch.load(cfg.TEST.MODEL_FILE, weights_only=True), strict=False)
+        if device == torch.cuda.is_available():
+            pose_model.load_state_dict(torch.load(cfg.TEST.MODEL_FILE, weights_only=True), strict=False)
+        else:
+            pose_model.load_state_dict(torch.load(cfg.TEST.MODEL_FILE, weights_only=True, map_location=device), strict=False)
     else:
         raise ValueError('expected model defined in config at TEST.MODEL_FILE')
     

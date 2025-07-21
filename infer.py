@@ -3,7 +3,7 @@ import glob
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
+from matplotlib.animation import FuncAnimation
 
 from tools.pose2muscle.CLIP_LoRA_temporal import CLIPLoRATemporalModel
 from feeder import input_feeder
@@ -55,6 +55,30 @@ def predict_shoulder_degree(pose2d):
     np.savetxt(f"shoulder_degrees.csv", np.array(theta_list), delimiter=",")
     print(">> Saved prediction to shoulder_degrees.csv")
 
+def visualization(pose3d):
+    bones = [[0, 1], [1, 2], [2, 3], [0, 4], [4, 5], [5, 6], [0, 7], [7, 8], [8, 9], [9, 10], [8, 11], [11, 12], [12, 13], [8, 14], [14, 15], [15, 16]] # MotionBERT; Human3.6M
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.view_init(elev=12., azim=80)
+
+    def update(frame):
+        ax.clear()
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([-1, 1])
+        ax.set_zlim([-1, 1])
+        frame_data = pose3d[frame]
+        
+        for bone in bones:
+            joint1, joint2 = bone
+            ax.plot([-frame_data[joint1, 0], -frame_data[joint2, 0]],
+                    [-frame_data[joint1, 2], -frame_data[joint2, 2]],
+                    [-frame_data[joint1, 1], -frame_data[joint2, 1]], 'ro-', markersize=3)
+
+    # 애니메이션 생성
+    ani = FuncAnimation(fig, update, frames=pose3d.shape[0])
+    ani.save('pose3d.mp4',fps=10)
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default='CLIPLoRATemporal')
@@ -71,6 +95,7 @@ def main(filepath):
     input_dict = input_feeder(filepath, target_size=512, target_fps=10)
     
     predict_shoulder_degree(input_dict['pose2d'])
+    visualization(input_dict['pose3d'])
     
     model = CLIPLoRATemporalModel.load_from_checkpoint('tools/pose2muscle/P2M_CLIP_LoRA_temporal-epoch=189-val_smape=0.66.ckpt', args=args)
     model = model.eval()
@@ -85,5 +110,5 @@ def main(filepath):
     return preds
 
 if __name__=='__main__':
-    filepath = "/home/tako/mesrwi/Pose2Muscle/examples/original_clip_1.mp4" # '/data2/Pose2Muscle/test/231121_A/ground_heavy/00014/clip.mp4'
+    filepath = "original_clip_1.mp4" # '/data2/Pose2Muscle/test/231121_A/ground_heavy/00014/clip.mp4'
     preds = main(filepath)
