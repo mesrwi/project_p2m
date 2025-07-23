@@ -44,7 +44,7 @@ class ResizedPad(object):
         
         return torch.stack(result, dim=1)
 
-def CLIP_feeder(filepath: str, target_fps):
+def CLIP_feeder(filepath: str, target_fps, save=False):
     input_vid = EncodedVideo.from_path(filepath)
     duration = int(input_vid.duration)
     transform = ApplyTransformToKey(
@@ -61,6 +61,10 @@ def CLIP_feeder(filepath: str, target_fps):
     
     processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
     clip_inputs = processor(images=rgb_inputs.permute(1, 0, 2, 3), do_rescale=False, return_tensors="pt", padding=True)
+    
+    if save:
+        outpath = os.path.dirname(filepath) + '/clip_inputs.pt'
+        torch.save(clip_inputs['pixel_values'], outpath)
     
     return clip_inputs
 
